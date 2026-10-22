@@ -7,3 +7,11 @@ class FestivalPublishedEvent:
     festival_id  : int
     festival_name: str
     occurred_at  : datetime = field(default_factory=datetime.utcnow)
+
+@dataclass(frozen=True)
+class FestivalCancelledEvent:
+    """Événement déclenché lorsque le festival est annulé."""
+    festival_id  : int
+    festival_name: str
+    occurred_at  : datetime = field(default_factory=datetime.utcnow)
+    
