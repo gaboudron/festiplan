@@ -14,8 +14,8 @@ class SchedulingConflictChecker:
             if concert.is_cancelled:
                 continue
 
-            if time_rangerange.overlaps_with(concert.time_range):
-                if concert.id == stage_id:
+            if time_range.overlaps_with(concert.time_range):
+                if concert.stage_id == stage_id:
                     raise StageOccupiedError()
                 if concert.artist_id == artist_id:
                     raise ArtistAlreadyScheduledError()
