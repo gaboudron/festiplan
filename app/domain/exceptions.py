@@ -21,7 +21,7 @@ class EquipmentMismatchError(DomainException):
         super().__init__(message)
 
 
-class InvalidIncidentMessage(DomainException):
+class InvalidIncidentMessageError(DomainException):
     """Levée quand un incident ne possède pas de message ou a un message vide."""
     def __init__(self, message: str = "Un incident doit avoir un message valide."):
         super().__init__(message)
