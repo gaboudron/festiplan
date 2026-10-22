@@ -6,7 +6,7 @@ class Incident:
     id: int | None
     concert_id: int
     description: str
-    occurred_at: field(default_factory=datetime.utcnow)
+    occurred_at: datetime = field(default_factory=datetime.utcnow)
     resolved: bool = False
 
 
