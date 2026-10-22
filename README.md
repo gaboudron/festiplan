@@ -9,15 +9,24 @@ API pédagogique FastAPI de gestion d'un festival metal fictif. Le dépôt est v
 - Notifications simulées, avec échec configurable
 
 ## Installation (Python 3.11+)
+
+Avec **uv** (recommandé) :
+```bash
+uv sync
+uv run python -m app.seed
+uv run uvicorn app.main:app --reload
+```
+
+Ou avec **pip** standard :
 ```bash
 python -m venv .venv
 # Windows: .venv\Scripts\Activate.ps1 ; macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
+pip install -e .
 python -m app.seed
 uvicorn app.main:app --reload
 ```
 Documentation : http://127.0.0.1:8000/docs
-Tests : `pytest`
+Tests : `pytest` (ou `uv run pytest`)
 
 Par défaut, SQLite crée `festiplan.db` dans le dossier courant. Copier `.env.example` vers `.env` si nécessaire.
 
