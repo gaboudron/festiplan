@@ -31,8 +31,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TEST_DIRS = [
     PROJECT_ROOT / "tests" / "domain",
     PROJECT_ROOT / "tests" / "ports" / "inbound",
+    PROJECT_ROOT / "tests" / "ports" / "outbound",
     PROJECT_ROOT / "tests" / "use_cases",
     PROJECT_ROOT / "tests" / "adapters" / "inbound",
+    PROJECT_ROOT / "tests" / "adapters" / "outbound",
 ]
 
 # Garantit que la racine du projet est dans sys.path (permet l'exécution sans PYTHONPATH=.)
