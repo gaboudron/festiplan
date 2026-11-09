@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from app.domain.exceptions import InvalidIncidentMessageError
 
 @dataclass
@@ -7,7 +7,7 @@ class Incident:
     id: int | None
     concert_id: int
     description: str
-    occurred_at: datetime = field(default_factory=datetime.utcnow)
+    occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     resolved: bool = False
 
 
