@@ -1,15 +1,16 @@
 from datetime import datetime
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
+from app.utils.datetime_helpers import UTCDateTime, utc_now
 
 class Festival(Base):
     __tablename__="festivals"
     id: Mapped[int]=mapped_column(Integer,primary_key=True,index=True)
     name: Mapped[str]=mapped_column(String(120),nullable=False)
     location: Mapped[str]=mapped_column(String(120),nullable=False)
-    start_date: Mapped[datetime]=mapped_column(DateTime,nullable=False)
-    end_date: Mapped[datetime]=mapped_column(DateTime,nullable=False)
+    start_date: Mapped[datetime]=mapped_column(UTCDateTime,nullable=False)
+    end_date: Mapped[datetime]=mapped_column(UTCDateTime,nullable=False)
     status: Mapped[str]=mapped_column(String(30),default="preparation",nullable=False)
     stages=relationship("Stage",back_populates="festival")
     concerts=relationship("Concert",back_populates="festival")
@@ -37,8 +38,8 @@ class Concert(Base):
     festival_id: Mapped[int]=mapped_column(ForeignKey("festivals.id"),nullable=False)
     artist_id: Mapped[int]=mapped_column(ForeignKey("artists.id"),nullable=False)
     stage_id: Mapped[int]=mapped_column(ForeignKey("stages.id"),nullable=False)
-    start_time: Mapped[datetime]=mapped_column(DateTime,nullable=False)
-    end_time: Mapped[datetime]=mapped_column(DateTime,nullable=False)
+    start_time: Mapped[datetime]=mapped_column(UTCDateTime,nullable=False)
+    end_time: Mapped[datetime]=mapped_column(UTCDateTime,nullable=False)
     status: Mapped[str]=mapped_column(String(30),default="scheduled",nullable=False)
     festival=relationship("Festival",back_populates="concerts")
     artist=relationship("Artist")
@@ -49,5 +50,5 @@ class Incident(Base):
     id: Mapped[int]=mapped_column(Integer,primary_key=True,index=True)
     concert_id: Mapped[int]=mapped_column(ForeignKey("concerts.id"),nullable=False)
     description: Mapped[str]=mapped_column(Text,nullable=False)
-    occurred_at: Mapped[datetime]=mapped_column(DateTime,default=datetime.utcnow,nullable=False)
+    occurred_at: Mapped[datetime]=mapped_column(UTCDateTime,default=utc_now,nullable=False)
     resolved: Mapped[bool]=mapped_column(Boolean,default=False,nullable=False)

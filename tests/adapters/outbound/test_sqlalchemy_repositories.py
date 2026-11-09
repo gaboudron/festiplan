@@ -177,12 +177,12 @@ def test_concert_repository_crud(db_session):
     # Reschedule
     saved.reschedule(
         TimeRange(
-            start=datetime(2027, 8, 20, 21, 0),
-            end=datetime(2027, 8, 20, 22, 30),
+            start=datetime(2027, 8, 20, 21, 0, tzinfo=timezone.utc),
+            end=datetime(2027, 8, 20, 22, 30, tzinfo=timezone.utc),
         )
     )
     updated = concert_repo.save(saved)
-    assert updated.time_range.start == datetime(2027, 8, 20, 21, 0)
+    assert updated.time_range.start == datetime(2027, 8, 20, 21, 0, tzinfo=timezone.utc)
 
     # Cancel
     updated.cancel()

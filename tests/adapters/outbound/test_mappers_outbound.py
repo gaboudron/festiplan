@@ -58,8 +58,8 @@ def test_stage_mapper():
 
 
 def test_festival_mapper():
-    start = datetime(2026, 7, 1, 10, 0)
-    end = datetime(2026, 7, 3, 23, 0)
+    start = datetime(2026, 7, 1, 10, 0, tzinfo=timezone.utc)
+    end = datetime(2026, 7, 3, 23, 0, tzinfo=timezone.utc)
     orm = FestivalORM(
         id=2,
         name="Summer Fest",
@@ -124,8 +124,8 @@ def test_artist_mapper():
 
 
 def test_concert_mapper():
-    start = datetime(2026, 7, 1, 20, 0)
-    end = datetime(2026, 7, 1, 22, 0)
+    start = datetime(2026, 7, 1, 20, 0, tzinfo=timezone.utc)
+    end = datetime(2026, 7, 1, 22, 0, tzinfo=timezone.utc)
     orm = ConcertORM(
         id=4,
         festival_id=2,
