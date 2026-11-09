@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from types import SimpleNamespace
 
 import pytest
 
@@ -75,19 +74,6 @@ def test_artist_to_response_requires_persisted_entity():
         artist_to_response(artist)
 
 
-def test_artist_to_response_accepts_orm_row():
-    row = SimpleNamespace(
-        id=7,
-        name="Iron Vow",
-        genre="Heavy metal",
-        required_equipment="large_rigging,special_lighting",
-    )
-
-    response = artist_to_response(row)
-
-    assert response.required_equipment == ["large_rigging", "special_lighting"]
-
-
 # ---------------------------------------------------------------------------
 # Stage
 # ---------------------------------------------------------------------------
@@ -113,20 +99,6 @@ def test_stage_mapping_round_trip():
 
     assert response.id == 3
     assert response.capacity == 50000
-    assert response.available_equipment == ["large_rigging", "special_lighting"]
-
-
-def test_stage_to_response_accepts_orm_row():
-    row = SimpleNamespace(
-        id=3,
-        festival_id=1,
-        name="Mainstage",
-        capacity=50000,
-        available_equipment="large_rigging,special_lighting",
-    )
-
-    response = stage_to_response(row)
-
     assert response.available_equipment == ["large_rigging", "special_lighting"]
 
 
@@ -170,23 +142,6 @@ def test_festival_mapping_rejects_invalid_time_range():
         festival_create_to_domain(dto)
 
 
-def test_festival_to_response_accepts_orm_row():
-    row = SimpleNamespace(
-        id=1,
-        name="Hellforge Open Air",
-        location="Clisson-sur-Rivière",
-        start_date=START,
-        end_date=END,
-        status="preparation",
-    )
-
-    response = festival_to_response(row)
-
-    assert response.start_date == START.replace(tzinfo=timezone.utc)
-    assert response.end_date == END.replace(tzinfo=timezone.utc)
-    assert response.status == "preparation"
-
-
 # ---------------------------------------------------------------------------
 # Concert
 # ---------------------------------------------------------------------------
@@ -227,24 +182,6 @@ def test_concert_mapping_to_response_includes_status():
     assert response.status == "scheduled"
     assert response.start_time == START.replace(tzinfo=timezone.utc)
     assert response.end_time == END.replace(tzinfo=timezone.utc)
-
-
-def test_concert_to_response_accepts_orm_row():
-    row = SimpleNamespace(
-        id=9,
-        festival_id=1,
-        artist_id=2,
-        stage_id=3,
-        start_time=START,
-        end_time=END,
-        status="scheduled",
-    )
-
-    response = concert_to_response(row)
-
-    assert response.start_time == START.replace(tzinfo=timezone.utc)
-    assert response.end_time == END.replace(tzinfo=timezone.utc)
-    assert response.status == "scheduled"
 
 
 def test_concert_reschedule_mapping_builds_time_range():
@@ -339,20 +276,6 @@ def test_incident_mapping_keeps_explicit_date():
     incident = incident_create_to_domain(dto)
 
     assert incident.occurred_at == occurred_at.replace(tzinfo=timezone.utc)
-
-
-def test_incident_to_response_accepts_orm_row():
-    row = SimpleNamespace(
-        id=5,
-        concert_id=1,
-        description="Retour de son",
-        occurred_at=START,
-        resolved=False,
-    )
-
-    response = incident_to_response(row)
-
-    assert response.occurred_at == START.replace(tzinfo=timezone.utc)
 
 
 def test_incident_mapping_rejects_blank_description():

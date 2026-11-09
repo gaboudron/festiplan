@@ -1,7 +1,5 @@
 """Mappings DTO ↔ domaine pour les scènes."""
 
-from typing import Any
-
 from app.adapters.inbound.api.dtos import StageCreateRequest, StageResponse
 from app.adapters.inbound.api.mappers.common import (
     equipment_items,
@@ -21,8 +19,8 @@ def stage_create_to_domain(dto: StageCreateRequest) -> Stage:
     )
 
 
-def stage_to_response(stage: Any) -> StageResponse:
-    """Mappe une scène du domaine (ou une ligne ORM transitoire) vers le DTO."""
+def stage_to_response(stage: Stage) -> StageResponse:
+    """Mappe une scène du domaine vers le DTO de réponse."""
     return StageResponse(
         id=require_persisted_id(stage.id),
         festival_id=stage.festival_id,

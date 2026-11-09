@@ -1,7 +1,5 @@
 """Mappings DTO ↔ domaine pour les festivals."""
 
-from typing import Any
-
 from app.adapters.inbound.api.dtos import (
     FestivalCreateRequest,
     FestivalResponse,
@@ -26,8 +24,8 @@ def festival_create_to_domain(dto: FestivalCreateRequest) -> Festival:
     )
 
 
-def festival_to_response(festival: Any) -> FestivalResponse:
-    """Mappe un festival du domaine (ou une ligne ORM transitoire) vers le DTO."""
+def festival_to_response(festival: Festival) -> FestivalResponse:
+    """Mappe un festival du domaine vers le DTO de réponse."""
     start_date, end_date = resolve_time_range(festival)
     return FestivalResponse(
         id=require_persisted_id(festival.id),

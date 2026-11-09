@@ -3,6 +3,8 @@
 from datetime import datetime
 from typing import Any
 
+from app.domain.equipments import EquipmentSet
+
 
 def require_persisted_id(entity_id: int | None) -> int:
     """Garantit qu'une entité possède un identifiant avant exposition API."""
@@ -13,37 +15,19 @@ def require_persisted_id(entity_id: int | None) -> int:
     return entity_id
 
 
-def equipment_items(value: Any) -> list[str]:
-    """Normalise un ensemble d'équipements en liste de chaînes.
-
-    Accepte indifféremment un ``EquipmentSet`` du domaine, une liste ou la
-    chaîne CSV utilisée par les modèles ORM historiques.
-    """
-    if value is None:
+def equipment_items(equipment: EquipmentSet | None) -> list[str]:
+    """Extrait la liste d'équipements depuis un ``EquipmentSet`` du domaine."""
+    if equipment is None:
         return []
-
-    to_list = getattr(value, "to_list", None)
-    if callable(to_list):
-        return to_list()
-
-    if isinstance(value, str):
-        return [item.strip() for item in value.split(",") if item.strip()]
-
-    return [str(item).strip() for item in value if str(item).strip()]
+    return equipment.to_list()
 
 
-def status_value(value: Any) -> str:
-    """Retourne la valeur texte d'un statut (enum du domaine ou chaîne ORM)."""
-    return value.value if hasattr(value, "value") else str(value)
+def status_value(status: Any) -> str:
+    """Retourne la valeur texte d'un statut (énumération du domaine)."""
+    return status.value if hasattr(status, "value") else str(status)
 
 
 def resolve_time_range(entity: Any) -> tuple[datetime, datetime]:
-    """Extrait les bornes temporelles d'une entité du domaine ou d'une ligne ORM."""
-    time_range = getattr(entity, "time_range", None)
-    if time_range is not None:
-        return time_range.start, time_range.end
-
-    if hasattr(entity, "start_date"):
-        return entity.start_date, entity.end_date
-
-    return entity.start_time, entity.end_time
+    """Extrait les bornes temporelles d'une entité du domaine."""
+    time_range = entity.time_range
+    return time_range.start, time_range.end

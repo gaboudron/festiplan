@@ -1,7 +1,5 @@
 """Mappings DTO ↔ domaine pour les incidents."""
 
-from typing import Any
-
 from app.adapters.inbound.api.dtos import (
     IncidentCreateRequest,
     IncidentResponse,
@@ -25,8 +23,8 @@ def incident_create_to_domain(dto: IncidentCreateRequest) -> Incident:
     )
 
 
-def incident_to_response(incident: Any) -> IncidentResponse:
-    """Mappe un incident du domaine (ou une ligne ORM transitoire) vers le DTO."""
+def incident_to_response(incident: Incident) -> IncidentResponse:
+    """Mappe un incident du domaine vers le DTO de réponse."""
     return IncidentResponse(
         id=require_persisted_id(incident.id),
         concert_id=incident.concert_id,
