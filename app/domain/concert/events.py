@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from app.domain.time_range import TimeRange
+from app.utils.datetime_helpers import utc_now
 
 @dataclass(frozen=True)
 class ConcertRescheduledEvent:
@@ -8,7 +9,7 @@ class ConcertRescheduledEvent:
     concert_id    : int
     festival_id   : int
     new_time_range: TimeRange
-    occurred_at   : datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    occurred_at   : datetime = field(default_factory=utc_now)
 
 
 @dataclass(frozen=True)
@@ -16,4 +17,4 @@ class ConcertCancelledEvent:
     """Événement émis lorsqu'un concert a été annulé."""
     concert_id : int
     festival_id: int
-    occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    occurred_at: datetime = field(default_factory=utc_now)
