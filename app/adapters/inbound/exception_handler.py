@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
@@ -68,6 +69,8 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={
                 "type": "VALIDATION_ERROR",
                 "detail": "Le format des données reçues est invalide.",
-                "errors": exc.errors()
+                # ``exc.errors()`` peut contenir des objets non sérialisables
+                # (par ex. ``ctx.error`` avec une ValueError).
+                "errors": jsonable_encoder(exc.errors())
             }
         )

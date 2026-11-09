@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from pydantic import BaseModel, field_validator
 
 from app.adapters.inbound.exception_handler import register_exception_handlers
 from app.domain.exceptions import (
@@ -45,6 +46,20 @@ def _build_client() -> TestClient:
     def validated(count: int):
         return {"count": count}
 
+    class Payload(BaseModel):
+        name: str
+
+        @field_validator("name")
+        @classmethod
+        def reject_forbidden_value(cls, value: str) -> str:
+            if value == "boom":
+                raise ValueError("valeur interdite")
+            return value
+
+    @test_app.post("/payload")
+    def payload(body: Payload):
+        return {"name": body.name}
+
     return TestClient(test_app)
 
 
@@ -81,3 +96,12 @@ def test_validation_errors_use_the_unified_format():
 
     assert response.status_code == 422
     assert response.json()["type"] == "VALIDATION_ERROR"
+
+
+def test_validation_error_details_are_json_serializable():
+    response = _build_client().post("/payload", json={"name": "boom"})
+
+    assert response.status_code == 422
+    body = response.json()
+    assert body["type"] == "VALIDATION_ERROR"
+    assert body["errors"][0]["msg"] == "Value error, valeur interdite"
