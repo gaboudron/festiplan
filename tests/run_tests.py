@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Script pour lancer les tests du domaine FestiPlan (Python standard & uv) :
+"""Script pour lancer les tests de FestiPlan (Python standard & uv).
 
 Commandes d'exécution :
     # Avec uv :
     uv run python tests/run_tests.py
-    uv run pytest tests/domain -v
+    uv run pytest tests/domain tests/adapters/inbound -v
 
     # Avec Python standard :
     python tests/run_tests.py
-    pytest tests/domain -v
+    pytest tests/domain tests/adapters/inbound -v
 
 Options utiles :
     # Filtrer par mot-clé (ex: uniquement les tests concert)
@@ -21,11 +21,17 @@ Options utiles :
 """
 import sys
 from pathlib import Path
+
 import pytest
 
 # Racine du projet (festiplan/)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DOMAIN_TESTS_DIR = PROJECT_ROOT / "tests" / "domain"
+
+# Ajouter ici chaque nouveau dossier de tests.
+TEST_DIRS = [
+    PROJECT_ROOT / "tests" / "domain",
+    PROJECT_ROOT / "tests" / "adapters" / "inbound",
+]
 
 # Garantit que la racine du projet est dans sys.path (permet l'exécution sans PYTHONPATH=.)
 if str(PROJECT_ROOT) not in sys.path:
@@ -34,9 +40,14 @@ if str(PROJECT_ROOT) not in sys.path:
 
 def main() -> int:
     extra_args = sys.argv[1:]
-    pytest_args = [str(DOMAIN_TESTS_DIR), "-v"] + extra_args
+    test_dirs = [str(directory) for directory in TEST_DIRS if directory.exists()]
+    pytest_args = test_dirs + ["-v"] + extra_args
 
-    print(f"Exécution des tests du domaine FestiPlan ({DOMAIN_TESTS_DIR.name}/)\n")
+    print("Lancement des tests FestiPlan :")
+    for directory in test_dirs:
+        print(f"  - {directory}")
+    print()
+
     return pytest.main(pytest_args)
 
 
