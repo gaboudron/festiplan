@@ -20,3 +20,11 @@ class TransactionOutboundPort(ABC):
     def rollback(self) -> None:
         """Annule la transaction en cours."""
         ...
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            self.rollback()
+        return False

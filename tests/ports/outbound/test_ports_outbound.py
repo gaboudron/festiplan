@@ -15,6 +15,9 @@ from app.domain.incident.entities import Incident
 from app.ports.outbound.notification.notification_outbound_port import (
     NotificationOutboundPort,
 )
+from app.ports.outbound.transaction.transaction_outbound_port import (
+    TransactionOutboundPort,
+)
 from app.ports.outbound.repository.artist_repository_outbound_port import (
     ArtistRepositoryOutboundPort,
 )
@@ -105,6 +108,14 @@ class FakeNotificationPort(NotificationOutboundPort):
         pass
 
 
+class FakeTransactionPort(TransactionOutboundPort):
+    def commit(self) -> None:
+        pass
+
+    def rollback(self) -> None:
+        pass
+
+
 # ==========================
 # Tests
 # ==========================
@@ -118,6 +129,7 @@ def test_ports_are_abstract():
         IncidentRepositoryOutboundPort,
         StageRepositoryOutboundPort,
         NotificationOutboundPort,
+        TransactionOutboundPort,
     ):
         with pytest.raises(TypeError):
             port()
@@ -130,6 +142,7 @@ def test_complete_implementations_are_valid():
     assert isinstance(FakeIncidentRepositoryPort(), IncidentRepositoryOutboundPort)
     assert isinstance(FakeStageRepositoryPort(), StageRepositoryOutboundPort)
     assert isinstance(FakeNotificationPort(), NotificationOutboundPort)
+    assert isinstance(FakeTransactionPort(), TransactionOutboundPort)
 
 
 def test_incomplete_implementation_cannot_be_instantiated():
@@ -146,6 +159,13 @@ def test_incomplete_implementation_cannot_be_instantiated():
 
     with pytest.raises(TypeError):
         IncompleteNotificationPort()
+
+    class IncompleteTransactionPort(TransactionOutboundPort):
+        def commit(self) -> None:
+            pass
+
+    with pytest.raises(TypeError):
+        IncompleteTransactionPort()
 
 
 def test_repository_ports_signatures():
