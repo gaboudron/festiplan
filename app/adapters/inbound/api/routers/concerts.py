@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+"""Routeur FastAPI pour les concerts."""
 
+from fastapi import APIRouter, Depends
+
+from app.adapters.inbound.api.dependencies import get_concert_service
 from app.adapters.inbound.api.dtos import (
     ConcertCreateRequest,
     ConcertRescheduleRequest,
@@ -11,74 +13,70 @@ from app.adapters.inbound.api.mappers import (
     concert_reschedule_to_time_range,
     concert_to_response,
 )
-from app.database import get_db
-from app.models import Concert
-from app.services.scheduling_service import SchedulingService
+from app.ports.inbound.concert_inbound_port import ConcertInboundPort
 
 router = APIRouter(prefix="/concerts", tags=["concerts"])
 
 
 @router.get("", response_model=list[ConcertResponse])
-def list_concerts(festival_id: int, db: Session = Depends(get_db)):
+def list_concerts(
+    festival_id: int,
+    service: ConcertInboundPort = Depends(get_concert_service),
+):
     return [
         concert_to_response(concert)
-        for concert in SchedulingService(db).list_concerts(festival_id)
+        for concert in service.list_concerts(festival_id)
     ]
 
 
 @router.get("/{concert_id}", response_model=ConcertResponse)
-def get_concert(concert_id: int, db: Session = Depends(get_db)):
-    # Accès direct à SQLAlchemy depuis le contrôleur : défaut architectural.
-    concert = db.query(Concert).filter(Concert.id == concert_id).first()
-    if concert is None:
-        raise HTTPException(status_code=404, detail="Concert introuvable")
-    return concert_to_response(concert)
+def get_concert(
+    concert_id: int,
+    service: ConcertInboundPort = Depends(get_concert_service),
+):
+    return concert_to_response(service.get_concert(concert_id))
 
 
 @router.post("", response_model=ConcertResponse, status_code=201)
-def create_concert(payload: ConcertCreateRequest, db: Session = Depends(get_db)):
-    # Validation du créneau à la frontière entrante (InvalidTimeRangeError -> 400).
-    concert_create_to_domain(payload)
-    try:
-        return concert_to_response(SchedulingService(db).create_concert(payload))
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+def create_concert(
+    payload: ConcertCreateRequest,
+    service: ConcertInboundPort = Depends(get_concert_service),
+):
+    concert = concert_create_to_domain(payload)
+    created = service.create_concert(concert)
+    return concert_to_response(created)
 
 
 @router.patch("/{concert_id}/reschedule", response_model=ConcertResponse)
 def reschedule_concert(
     concert_id: int,
     payload: ConcertRescheduleRequest,
-    db: Session = Depends(get_db),
+    service: ConcertInboundPort = Depends(get_concert_service),
 ):
-    # Validation du nouveau créneau à la frontière entrante.
-    concert_reschedule_to_time_range(payload)
-
-    try:
-        concert = SchedulingService(db).reschedule_concert(concert_id, payload)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except RuntimeError as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
-
-    # Le service retourne None quand le concert n'existe pas : pas besoin
-    # d'une lecture SQLAlchemy supplémentaire dans le routeur.
-    if concert is None:
-        raise HTTPException(status_code=404, detail="Concert introuvable")
-    return concert_to_response(concert)
+    new_time_range = concert_reschedule_to_time_range(payload)
+    rescheduled = service.reschedule_concert(
+        concert_id=concert_id,
+        new_time_range=new_time_range,
+        new_stage_id=payload.stage_id,
+    )
+    return concert_to_response(rescheduled)
 
 
 @router.post("/{concert_id}/cancel", response_model=ConcertResponse)
-def cancel_concert(concert_id: int, db: Session = Depends(get_db)):
-    concert = SchedulingService(db).cancel_concert(concert_id)
-    if concert is None:
-        raise HTTPException(status_code=404, detail="Concert introuvable")
-    return concert_to_response(concert)
+def cancel_concert(
+    concert_id: int,
+    service: ConcertInboundPort = Depends(get_concert_service),
+):
+    cancelled = service.cancel_concert(concert_id)
+    return concert_to_response(cancelled)
 
 
 @router.get("/schedule/{festival_id}", response_model=list[ConcertResponse])
-def get_schedule(festival_id: int, db: Session = Depends(get_db)):
+def get_schedule(
+    festival_id: int,
+    service: ConcertInboundPort = Depends(get_concert_service),
+):
     return [
         concert_to_response(concert)
-        for concert in SchedulingService(db).get_schedule(festival_id)
+        for concert in service.get_schedule(festival_id)
     ]
