@@ -36,6 +36,7 @@ Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** 
 - [x] Mettre `TEST_DIRS` à jour.
 - [x] Valider `test_sqlalchemy_repositories.py` et relancer `test_timezone.py` (suite verte).
 - [x] Vérifier que `pytest -q` (découverte libre) et `python tests/run_tests.py` donnent le même résultat.
+- [x] `UTCDateTime` sait désormais servir de type d'annotation Pydantic (`__get_pydantic_core_schema__`) ; alias `UTCDateTimeOrNone` ajouté et réexportés depuis `app/models.py` (collègue, `bf4d592`).
 
 ### B. Use cases — repris par nous (collègue indisponible)
 
@@ -46,7 +47,7 @@ Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** 
 - [x] Rendre le changement de scène effectif : `Concert.reschedule(..., new_stage_id=...)` est appelé par `ConcertService`.
 - [x] Écrire les tests unitaires des use cases avec `MagicMock(spec=...)` (décision 11) : 43 tests.
 - [ ] ⬜ **Adaptateur du bus** : implémentation concrète (bus en mémoire / outbox) + handlers qui traduisent les événements en appels à `NotificationOutboundPort`. À faire avec le DI (décision 12).
-- [ ] ⬜ **Retirer le `commit()` des repositories SQLAlchemy** dans `save()` : aujourd'hui ils portent encore la transaction, ce qui double le commit du port. À faire au moment du câblage.
+- [x] **Retirer le `commit()` des repositories SQLAlchemy** : fait par le collègue (`ab169f7`), `save()` ne fait plus qu'un `flush()`. Le port de transaction est donc le seul propriétaire du commit. Reste à fournir son implémentation concrète au moment du DI.
 - [ ] ⬜ Ajouter le document d'architecture (décision n°7) au dépôt et consigner les arbitrages 5/6/7.
 
 ### C. Notre périmètre inbound
@@ -61,8 +62,8 @@ Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** 
 
 ### D. Livraison
 
-- [ ] ⬜ Stratégie de branche : nouvelle branche depuis `main` (les deux PR sont fusionnées).
-- [ ] ⬜ Push / PR : pas de push sans demande explicite.
+- [ ] ⏸ Stratégie de branche : le travail a été fait directement sur `main` ; à redécider pour la suite si besoin.
+- [x] Push de `main` effectué sur demande explicite (7 commits rebasés + ce correctif). Règle conservée : pas de push sans demande ; PR à ouvrir si besoin.
 
 ---
 
@@ -70,7 +71,7 @@ Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** 
 
 1. ✅ Préalables, pull, suite verte.
 2. ✅ Ports de transaction / événements, `FestivalPolicy`, use cases, tests unitaires.
-3. ⏭ DI (décision 12) : instancier repositories + use cases, implémenter le bus et ses handlers, retirer le `commit()` des repositories.
+3. ⏭ DI (décision 12) : instancier repositories + use cases, fournir l'adaptateur du port de transaction (`commit`/`rollback` sur la session), implémenter le bus et ses handlers.
 4. Puis, côté inbound : routeurs sur ports → mappers/catches/404 → réécriture des tests HTTP.
 5. Enfin : nettoyage legacy, documentation, branche, PR.
 
@@ -78,4 +79,5 @@ Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** 
 
 - Les tests HTTP actuels passent par les services legacy : la suppression finale les cassera si elle n'est pas précédée de leur réécriture.
 - Le pont `app/models.py` est **transitoire** : ne pas le considérer comme de l'architecture cible.
-- La décision 5 implique que les repositories ne doivent plus porter le `commit()` eux-mêmes (ils le font aujourd'hui dans `save()`).
+- ✅ La décision 5 est respectée côté persistance : les repositories ne font plus que `flush()`. **Il manque encore l'adaptateur concret de `TransactionOutboundPort`** (à câbler avec le DI) : sans lui, les écritures des use cases ne sont pas validées en base.
+- Les routeurs appellent encore les services legacy : les use cases ne sont pas exposés à l'API tant que le DI n'est pas fait.
