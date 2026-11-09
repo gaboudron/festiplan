@@ -34,13 +34,11 @@ class FestivalSqlAlchemyRepository(FestivalRepositoryOutboundPort):
             )
             if existing_orm is not None:
                 orm = FestivalMapper.to_orm(festival, existing_orm=existing_orm)
-                self.db.commit()
-                self.db.refresh(orm)
+                self.db.flush()
                 return FestivalMapper.to_domain(orm)
 
         orm = FestivalMapper.to_orm(festival)
         self.db.add(orm)
-        self.db.commit()
-        self.db.refresh(orm)
+        self.db.flush()
         return FestivalMapper.to_domain(orm)
 

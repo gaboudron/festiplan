@@ -47,13 +47,11 @@ class IncidentSqlAlchemyRepository(IncidentRepositoryOutboundPort):
             )
             if existing_orm is not None:
                 orm = IncidentMapper.to_orm(incident, existing_orm=existing_orm)
-                self.db.commit()
-                self.db.refresh(orm)
+                self.db.flush()
                 return IncidentMapper.to_domain(orm)
 
         orm = IncidentMapper.to_orm(incident)
         self.db.add(orm)
-        self.db.commit()
-        self.db.refresh(orm)
+        self.db.flush()
         return IncidentMapper.to_domain(orm)
 

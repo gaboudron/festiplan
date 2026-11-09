@@ -30,13 +30,11 @@ class ArtistSqlAlchemyRepository(ArtistRepositoryOutboundPort):
             )
             if existing_orm is not None:
                 orm = ArtistMapper.to_orm(artist, existing_orm=existing_orm)
-                self.db.commit()
-                self.db.refresh(orm)
+                self.db.flush()
                 return ArtistMapper.to_domain(orm)
 
         orm = ArtistMapper.to_orm(artist)
         self.db.add(orm)
-        self.db.commit()
-        self.db.refresh(orm)
+        self.db.flush()
         return ArtistMapper.to_domain(orm)
 

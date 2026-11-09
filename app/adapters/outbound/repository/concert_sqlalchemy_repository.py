@@ -39,13 +39,11 @@ class ConcertSqlAlchemyRepository(ConcertRepositoryOutboundPort):
             )
             if existing_orm is not None:
                 orm = ConcertMapper.to_orm(concert, existing_orm=existing_orm)
-                self.db.commit()
-                self.db.refresh(orm)
+                self.db.flush()
                 return ConcertMapper.to_domain(orm)
 
         orm = ConcertMapper.to_orm(concert)
         self.db.add(orm)
-        self.db.commit()
-        self.db.refresh(orm)
+        self.db.flush()
         return ConcertMapper.to_domain(orm)
 

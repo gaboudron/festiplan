@@ -33,13 +33,11 @@ class StageSqlAlchemyRepository(StageRepositoryOutboundPort):
             )
             if existing_orm is not None:
                 orm = StageMapper.to_orm(stage, existing_orm=existing_orm)
-                self.db.commit()
-                self.db.refresh(orm)
+                self.db.flush()
                 return StageMapper.to_domain(orm)
 
         orm = StageMapper.to_orm(stage)
         self.db.add(orm)
-        self.db.commit()
-        self.db.refresh(orm)
+        self.db.flush()
         return StageMapper.to_domain(orm)
 
