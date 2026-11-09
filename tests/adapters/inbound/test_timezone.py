@@ -12,8 +12,8 @@ from app.adapters.inbound.api.dtos import (
     FestivalCreateRequest,
     IncidentCreateRequest,
 )
+from app.adapters.outbound.repository.models import Festival
 from app.database import SessionLocal
-from app.models import Festival
 from app.utils.datetime_helpers import ensure_utc
 
 

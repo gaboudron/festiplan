@@ -1,6 +1,12 @@
 from datetime import datetime
-from app.database import Base,SessionLocal,engine
-from app.models import Festival,Artist,Stage,Concert,Incident
+from app.database import Base, SessionLocal, engine
+from app.adapters.outbound.repository.models import (
+    Artist,
+    Concert,
+    Festival,
+    Incident,
+    Stage,
+)
 
 Base.metadata.create_all(bind=engine)
 

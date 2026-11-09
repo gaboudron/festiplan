@@ -58,12 +58,12 @@ Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** 
 - [x] Retirer les `try/except ValueError/RuntimeError` quand les use cases lèveront les exceptions du domaine (délégué à `register_exception_handlers`).
 - [x] Corriger les 404 des entités liées à la création d'un concert (géré nativement par `EntityNotFoundError`).
 - [x] Ajouter les tests d'intégration HTTP avec `app.dependency_overrides` avant la suppression du legacy.
-- [ ] ⬜ **Nettoyage final** : supprimer `app/services/`, `app/repositories/` et le pont `app/models.py` de l'arbre de travail. Conservés dans l'historique git pour la traçabilité (décision 1).
+- [x] **Nettoyage final** : suppression de `app/services/`, `app/repositories/` et du pont `app/models.py` de l'arbre de travail (décision 1).
 
 ### D. Livraison
 
-- [ ] ⏸ Stratégie de branche : le travail a été fait directement sur `main` ; à redécider pour la suite si besoin.
-- [x] Push de `main` effectué sur demande explicite (7 commits rebasés + ce correctif). Règle conservée : pas de push sans demande ; PR à ouvrir si besoin.
+- [x] Branche dédiée `feature/bus` pour isoler les développements et préparer la PR.
+- [ ] ⬜ Push de la branche et ouverture de la PR vers `main`.
 
 ---
 
@@ -71,13 +71,14 @@ Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** 
 
 1. ✅ Préalables, pull, suite verte.
 2. ✅ Ports de transaction / événements, `FestivalPolicy`, use cases, tests unitaires.
-3. ⏭ DI (décision 12) : instancier repositories + use cases, fournir l'adaptateur du port de transaction (`commit`/`rollback` sur la session), implémenter le bus et ses handlers.
-4. Puis, côté inbound : routeurs sur ports → mappers/catches/404 → réécriture des tests HTTP.
-5. Enfin : nettoyage legacy, documentation, branche, PR.
+3. ✅ DI (décision 12) : instanciation repositories + use cases, adaptateur de transaction SQLAlchemy (`commit`/`rollback` sur la session), bus d'événements en mémoire et handlers.
+4. ✅ Côté inbound : routeurs sur ports → mappers/catches/404 → tests d'intégration avec `dependency_overrides`.
+5. ✅ Nettoyage legacy (`app/services/`, `app/repositories/`, `app/models.py`).
+6. ⏭ Livraison : PR vers `main`.
 
 ## Points de vigilance
 
-- Les tests HTTP actuels passent par les services legacy : la suppression finale les cassera si elle n'est pas précédée de leur réécriture.
-- Le pont `app/models.py` est **transitoire** : ne pas le considérer comme de l'architecture cible.
-- ✅ La décision 5 est respectée côté persistance : les repositories ne font plus que `flush()`. **Il manque encore l'adaptateur concret de `TransactionOutboundPort`** (à câbler avec le DI) : sans lui, les écritures des use cases ne sont pas validées en base.
-- Les routeurs appellent encore les services legacy : les use cases ne sont pas exposés à l'API tant que le DI n'est pas fait.
+- ✅ Les tests HTTP passent désormais intégralement par les use cases et ports entrants injectés via FastAPI `Depends()`.
+- ✅ Le pont `app/models.py` a été **supprimé** : les modèles ORM vivent exclusivement dans `app/adapters/outbound/repository/models.py`.
+- ✅ La décision 5 est pleinement opérationnelle : `SqlAlchemyTransactionAdapter` porte le commit / rollback et encadre chaque opération d'écriture des use cases.
+- ✅ Les 5 routeurs ne consomment plus que les interfaces abstraites (`InboundPort`).
