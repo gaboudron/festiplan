@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from app.config import settings
 from app.database import Base,engine
 from app import models  # noqa
-from app.api import festivals,artists,stages,concerts,incidents
+from app.adapters.inbound.api.routers import festivals,artists,stages,concerts,incidents
 from app.adapters.inbound.exception_handler import register_exception_handlers
 
 Base.metadata.create_all(bind=engine)
