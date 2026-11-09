@@ -28,9 +28,19 @@ class Festival:
         return self.status == FestivalStatus.PUBLISHED
 
 
+    @property
+    def is_cancelled(self) -> bool:
+        return self.status == FestivalStatus.CANCELLED
+
+
     def publish(self) -> None:
         """Fait passer le festival en statut publié."""
         self.status = FestivalStatus.PUBLISHED
+
+
+    def cancel(self) -> None:
+        """Annule le festival."""
+        self.status = FestivalStatus.CANCELLED
 
 
     def contains_time_range(self, range: TimeRange) -> bool:
