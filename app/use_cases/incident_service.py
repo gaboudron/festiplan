@@ -1,5 +1,6 @@
 """Service applicatif pour les incidents."""
 
+from app.domain.exceptions import IncidentNotFoundError
 from app.domain.incident.entities import Incident
 from app.ports.inbound.incident_inbound_port import IncidentInboundPort
 from app.ports.outbound.repository.concert_repository_outbound_port import (
@@ -35,6 +36,15 @@ class IncidentService(IncidentInboundPort):
     def declare_incident(self, incident: Incident) -> Incident:
         # Un incident ne peut concerner qu'un concert existant.
         require_concert(self._concerts, incident.concert_id)
+        return in_transaction(
+            self._transaction, lambda: self._incidents.save(incident)
+        )
+
+    def resolve_incident(self, incident_id: int) -> Incident:
+        incident = self._incidents.get(incident_id)
+        if incident is None:
+            raise IncidentNotFoundError(incident_id)
+        incident.mark_resolved()
         return in_transaction(
             self._transaction, lambda: self._incidents.save(incident)
         )

@@ -17,3 +17,7 @@ class IncidentInboundPort(ABC):
     def declare_incident(self, incident: Incident) -> Incident:
         """Déclare un incident et retourne l'entité persistée."""
         ...
+
+    def resolve_incident(self, incident_id: int) -> Incident:
+        """Marque un incident comme résolu et retourne l'entité persistée."""
+        raise NotImplementedError

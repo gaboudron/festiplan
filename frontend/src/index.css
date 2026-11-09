@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #070709;
+    color: #f1f5f9;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Custom Hellfest scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0d0d12;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2e3042;
+    border-radius: 4px;
+    border: 1px solid #14141c;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #dc2626;
+  }
+}
+
+@layer utilities {
+  .text-glow-red {
+    text-shadow: 0 0 12px rgba(220, 38, 38, 0.7), 0 0 25px rgba(239, 68, 68, 0.4);
+  }
+  .text-glow-green {
+    text-shadow: 0 0 12px rgba(16, 185, 129, 0.7), 0 0 25px rgba(52, 211, 153, 0.4);
+  }
+  .border-fire {
+    border-color: #dc2626;
+    box-shadow: 0 0 15px -3px rgba(220, 38, 38, 0.4);
+  }
+  .border-toxic {
+    border-color: #10b981;
+    box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.4);
+  }
+  .bg-noise {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+}
+
+/* Animations */
+@keyframes flame-flicker {
+  0%, 100% { opacity: 0.95; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(0.98); }
+}
+
+.animate-flame {
+  animation: flame-flicker 2.5s infinite ease-in-out;
+}
+

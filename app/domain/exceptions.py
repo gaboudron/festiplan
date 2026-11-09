@@ -96,3 +96,8 @@ class StageNotFoundError(EntityNotFoundError):
 class ArtistNotFoundError(EntityNotFoundError):
     def __init__(self, artist_id: int):
         super().__init__(f"Artiste #{artist_id} introuvable.")
+
+
+class IncidentNotFoundError(EntityNotFoundError):
+    def __init__(self, incident_id: int):
+        super().__init__(f"Incident #{incident_id} introuvable.")

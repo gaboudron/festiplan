@@ -33,6 +33,17 @@ uvicorn app.main:app --reload
 Documentation : http://127.0.0.1:8000/docs
 Tests : `pytest` (ou `uv run pytest`)
 
+## Frontend Web (React + TypeScript — Thème Hellfest)
+
+Une interface web moderne pour FestiPlan a été développée dans le dossier `frontend/` avec React 18, TypeScript, Tailwind CSS et Lucide Icons, reprenant l'univers visuel du Hellfest (rouge flamme, vert acide, noir abyssal).
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+L'application est accessible sur : **http://localhost:5173** (avec proxy automatique vers l'API backend sur le port 8000).
+
 Par défaut, SQLite crée `festiplan.db` dans le dossier courant. Copier `.env.example` vers `.env` si nécessaire.
 
 ## Données
