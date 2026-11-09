@@ -281,6 +281,31 @@ def test_concert_reschedule_to_domain_updates_stage_and_time():
     assert updated.time_range == TimeRange(START, END)
 
 
+def test_concert_reschedule_stage_is_optional():
+    dto = ConcertRescheduleRequest(start_time=START, end_time=END)
+
+    assert dto.stage_id is None
+
+
+def test_concert_reschedule_to_domain_keeps_stage_when_not_provided():
+    concert = concert_create_to_domain(
+        ConcertCreateRequest(
+            festival_id=1,
+            artist_id=2,
+            stage_id=3,
+            start_time=START,
+            end_time=END,
+        )
+    )
+    concert.id = 9
+    dto = ConcertRescheduleRequest(start_time=START, end_time=END)
+
+    updated = concert_reschedule_to_domain(concert, dto)
+
+    assert updated.stage_id == 3
+    assert updated.time_range == TimeRange(START, END)
+
+
 # ---------------------------------------------------------------------------
 # Incident
 # ---------------------------------------------------------------------------

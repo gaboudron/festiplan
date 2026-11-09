@@ -142,6 +142,33 @@ def test_invalid_reschedule_range_is_mapped_to_400(client):
     assert response.json()["type"] == "BAD_REQUEST"
 
 
+def test_reschedule_without_stage_id_keeps_current_stage(client):
+    festival = _create_festival(client)
+    artist = _create_artist(client)
+    stage = _create_stage(client, festival["id"])
+    concert = client.post(
+        "/concerts",
+        json={
+            "festival_id": festival["id"],
+            "artist_id": artist["id"],
+            "stage_id": stage["id"],
+            "start_time": "2027-06-18T18:00:00",
+            "end_time": "2027-06-18T19:30:00",
+        },
+    ).json()
+
+    response = client.patch(
+        f"/concerts/{concert['id']}/reschedule",
+        json={
+            "start_time": "2027-06-18T20:00:00",
+            "end_time": "2027-06-18T21:00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["stage_id"] == stage["id"]
+
+
 def test_unknown_concert_returns_404(client):
     assert client.get("/concerts/999").status_code == 404
 

@@ -40,12 +40,11 @@ def concert_reschedule_to_domain(
 ) -> Concert:
     """Applique la reprogrammation au concert.
 
-    Le changement de scène est effectué lorsque le DTO expose un ``stage_id``
-    (cas de ``ConcertRescheduleRequest``).
+    ``dto.stage_id`` à ``None`` conserve la scène actuelle.
     """
     concert.reschedule(
         new_time_range=concert_reschedule_to_time_range(dto),
-        new_stage_id=getattr(dto, "stage_id", None),
+        new_stage_id=dto.stage_id,
     )
     return concert
 

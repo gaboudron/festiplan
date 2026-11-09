@@ -18,11 +18,10 @@ class ConcertCreateRequest(BaseModel):
 class ConcertRescheduleRequest(BaseModel):
     """Payload attendu pour le déplacement d'un concert.
 
-    Le ``stage_id`` reste porté par ce DTO : la forme définitive est encore à
-    arbitrer avec l'équipe domaine, mais le mapper sait déjà l'appliquer.
+    ``stage_id`` est optionnel : ``None`` conserve la scène actuelle.
     """
 
-    stage_id: int
+    stage_id: int | None = None
     start_time: UTCDatetime
     end_time: UTCDatetime
 
