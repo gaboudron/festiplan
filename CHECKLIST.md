@@ -1,7 +1,7 @@
 # Checklist de la migration hexagonale — décisions arbitrées
 
 État de référence : `main` à jour avec `origin/main` (PR #2 et #3 fusionnées).
-Suite complète : **102 tests passent** (`python tests/run_tests.py -q`).
+Suite complète : **145 tests passent** (`python tests/run_tests.py -q`, identique à `pytest -q`).
 
 Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** retenu
 
@@ -18,7 +18,7 @@ Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** 
 | 5 | Frontière de transaction | **[R] A** — découpler au maximum : **le cas d'usage appelle le port qui effectue la transaction**. Le use case ne commit pas lui-même ; un port de transaction (UoW) porte le commit. |
 | 6 | Point 4 — événements & notifications | **[R] A** — événements de domaine + bus/outbox, handlers après commit. Dépend du collègue. |
 | 7 | Point 6 — règles d'état | **[R] B** — services de domaine : `SchedulingConflictChecker`, `EquipmentChecker`, + un `FestivalPolicy`. Dépend du collègue. |
-| 8 | Périmètre | **[R] A** — nous : inbound (DTO, mappers, routeurs, DI, handlers). Collègue : domaine, use cases, persistance. |
+| 8 | Périmètre | **[R] A**, amendé : le collègue n'a pas le temps, donc **nous reprenons aussi les use cases**. Restent au collègue : la persistance et les arbitrages qu'il avait en cours. |
 | 9 | Style des use cases | **[R] A** — services d'application implémentant les ABC (`ConcertService(ConcertInboundPort)`, …, `IncidentService`). |
 | 10 | Implémentation des use cases | **[R] A** — orchestrer entités + `SchedulingConflictChecker` + `EquipmentChecker` + ports sortants. |
 | 11 | Tests unitaires des use cases | **[R] B** — `unittest.mock.MagicMock` (avec `spec=` sur les ABC), pas de faux repositories. Les fabriques/fixtures restent pour les entités. Convention mise à jour dans `tests/use_cases/README.md`. |
@@ -34,17 +34,19 @@ Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** 
 - [x] Pont de réexport `app/models.py`.
 - [x] Renommer/déplacer les tests sortants et éviter la collision de noms.
 - [x] Mettre `TEST_DIRS` à jour.
-- [ ] 🔄 Valider `test_sqlalchemy_repositories.py` à 100% et relancer `test_timezone.py` après coup (collègue).
-- [ ] Vérifier que `pytest -q` (découverte libre) et `python tests/run_tests.py` donnent le même résultat.
+- [x] Valider `test_sqlalchemy_repositories.py` et relancer `test_timezone.py` (suite verte).
+- [x] Vérifier que `pytest -q` (découverte libre) et `python tests/run_tests.py` donnent le même résultat.
 
-### B. À trancher / livrer par le collègue
+### B. Use cases — repris par nous (collègue indisponible)
 
-- [ ] ⬜ Définir le **port de transaction** (UoW) dans `app/ports/outbound/` : signature, qui l'implémente, quand le commit a lieu (décision 5).
-- [ ] ⬜ **Point 4** : mode de déclenchement des événements et des notifications (bus/outbox, handlers après commit) — décision 6.
-- [ ] ⬜ **Point 6** : `FestivalPolicy` et la liste des exceptions d'état à lever — décision 7.
-- [ ] ⬜ Implémenter les use cases dans `app/use_cases/` (décisions 8, 9, 10), dont `IncidentService`.
-- [ ] ⬜ Rendre le changement de scène effectif : `Concert.reschedule(..., new_stage_id=...)` doit être appelé par le use case.
-- [ ] ⬜ Écrire les tests unitaires des use cases avec `MagicMock(spec=...)` (décision 11).
+- [x] Définir le **port de transaction** dans `app/ports/outbound/transaction/` (`commit` / `rollback`) — décision 5.
+- [x] Définir le **port de bus d'événements** dans `app/ports/outbound/events/` — décision 6, versant use case.
+- [x] **Point 6** : `FestivalPolicy` dans `app/domain/services/` + tests unitaires — décision 7.
+- [x] Implémenter les 5 services applicatifs dans `app/use_cases/` (`ArtistService`, `StageService`, `FestivalService`, `ConcertService`, `IncidentService`) — décisions 9, 10.
+- [x] Rendre le changement de scène effectif : `Concert.reschedule(..., new_stage_id=...)` est appelé par `ConcertService`.
+- [x] Écrire les tests unitaires des use cases avec `MagicMock(spec=...)` (décision 11) : 43 tests.
+- [ ] ⬜ **Adaptateur du bus** : implémentation concrète (bus en mémoire / outbox) + handlers qui traduisent les événements en appels à `NotificationOutboundPort`. À faire avec le DI (décision 12).
+- [ ] ⬜ **Retirer le `commit()` des repositories SQLAlchemy** dans `save()` : aujourd'hui ils portent encore la transaction, ce qui double le commit du port. À faire au moment du câblage.
 - [ ] ⬜ Ajouter le document d'architecture (décision n°7) au dépôt et consigner les arbitrages 5/6/7.
 
 ### C. Notre périmètre inbound
@@ -66,11 +68,11 @@ Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** 
 
 ## Ordre conseillé
 
-1. Finir le point 4 et vérifier la suite complète.
-2. Le collègue livre les arbitrages 5/6/7 et le port de transaction.
-3. Use cases + tests unitaires.
-4. Puis, côté inbound : DI → routeurs sur ports → mappers/catches/404 → nettoyage legacy.
-5. Enfin : documentation, branche, PR.
+1. ✅ Préalables, pull, suite verte.
+2. ✅ Ports de transaction / événements, `FestivalPolicy`, use cases, tests unitaires.
+3. ⏭ DI (décision 12) : instancier repositories + use cases, implémenter le bus et ses handlers, retirer le `commit()` des repositories.
+4. Puis, côté inbound : routeurs sur ports → mappers/catches/404 → réécriture des tests HTTP.
+5. Enfin : nettoyage legacy, documentation, branche, PR.
 
 ## Points de vigilance
 
