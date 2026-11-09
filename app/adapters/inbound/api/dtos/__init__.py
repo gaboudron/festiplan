@@ -1,7 +1,8 @@
 """Point d'entrée public des DTO de l'adaptateur entrant.
 
 Les DTO sont segmentés par domaine métier pour garder chaque fichier court
-et faciliter la navigation.
+et faciliter la navigation. Ils portent la validation et la normalisation
+UTC à la frontière HTTP, sans contenir de logique métier.
 """
 
 from app.adapters.inbound.api.dtos.artist_dtos import (

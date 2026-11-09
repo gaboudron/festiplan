@@ -1,7 +1,7 @@
 """Ports entrants de l'application FestiPlan.
 
 Les ports entrants décrivent les cas d'usage que l'adaptateur entrant (HTTP)
-peut appeler. Les implémentations vivent dans la couche application et
+peut appeler. Leurs implémentations vivent dans ``app/use_cases`` et
 manipulent exclusivement des entités du domaine.
 
 Convention de nommage : le fichier est le snake_case du nom de classe, comme

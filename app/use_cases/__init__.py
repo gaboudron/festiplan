@@ -2,7 +2,8 @@
 
 Les services applicatifs implémentent les ports entrants (``app/ports/inbound``)
 et orchestrent les entités du domaine, les services de domaine et les ports
-sortants. Ils ne connaissent ni HTTP ni SQLAlchemy.
+sortants. Ils ne connaissent ni HTTP ni SQLAlchemy : la transaction est
+déléguée au port de transaction et les événements sont publiés après commit.
 """
 
 from app.use_cases.artist_service import ArtistService
