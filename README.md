@@ -8,6 +8,11 @@ API pédagogique FastAPI de gestion d'un festival metal fictif. Le dépôt est v
 - Publication d'un festival et déclaration d'incidents
 - Notifications simulées, avec échec configurable
 
+## Documentation
+- **Diagnostic de l'existant** : voir [diagnostic_existant.md](diagnostic_existant.md)
+- **Documentation UML** : voir [diagramme_architecture.png](diagramme_architecture.png) (issu du code PlantUML [diagramme_architecture.puml](diagramme_architecture.puml))
+- **Justifications des choix d'implémentation** : voir [justifications.md](justifications.md)
+
 ## Installation (Python 3.11+)
 
 Avec **uv** (recommandé) :

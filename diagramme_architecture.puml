@@ -1,0 +1,278 @@
+@startuml festiplan_architecture
+top to bottom direction
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam roundCorner 8
+skinparam classAttributeIconSize 0
+skinparam ranksep 28
+skinparam nodesep 18
+
+skinparam package {
+    BackgroundColor #F8F9FA
+    BorderColor #6C757D
+}
+
+skinparam class {
+    BackgroundColor White
+    BorderColor #495057
+}
+
+skinparam interface {
+    BackgroundColor #E9ECEF
+    BorderColor #495057
+}
+
+' ========================================================
+' 1. ADAPTATEURS D'ENTRÉE (FastAPI)
+' ========================================================
+package "1. Adaptateurs d'Entrée (adapters/inbound/api)" as AdaptersIn #F0F4F8 {
+    class "FastAPI Routers\n(/concerts, /festivals, ...)" as Routers <<FastAPI>> {
+        + create_concert(payload, service)
+        + reschedule_concert(id, payload, service)
+        + publish_festival(id, service)
+    }
+    class Dependencies <<FastAPI Depends>> {
+        + get_concert_service()
+        + get_festival_service()
+        + get_transaction_port()
+        + get_event_bus()
+    }
+    class InboundMappers <<DTO ↔ Domaine>> {
+        + *_create_to_domain(dto)
+        + *_to_response(entity)
+    }
+    class ExceptionHandler <<Global Handler>> {
+        + DomainException -> 400
+        + FestivalAlreadyPublishedError -> 403
+        + EntityNotFoundError -> 404
+        + ScheduleConflictError -> 409
+    }
+}
+
+' ========================================================
+' 2. PORTS D'ENTRÉE
+' ========================================================
+package "2. Ports d'Entrée (ports/inbound)" as PortsIn #EBF3FB {
+    interface ConcertInboundPort <<ABC>> {
+        + create_concert(concert): Concert
+        + reschedule_concert(id, time_range, stage_id): Concert
+        + cancel_concert(id): Concert
+        + list_concerts(festival_id): List[Concert]
+    }
+    interface FestivalInboundPort <<ABC>> {
+        + create_festival(festival): Festival
+        + publish_festival(id): Festival
+        + list_festivals(): List[Festival]
+    }
+    interface "Stage / Artist / Incident\nInboundPorts" as OtherInboundPorts <<ABC>> {
+        + create_stage() / list_stages()
+        + create_artist() / list_artists()
+        + declare_incident() / list_incidents()
+    }
+}
+
+' ========================================================
+' 3. CAS D'USAGE (Application)
+' ========================================================
+package "3. Cas d'Usage (use_cases)" as UseCases #EBF3FB {
+    class ConcertService {
+        - concerts: ConcertRepositoryOutboundPort
+        - transaction: TransactionOutboundPort
+        - event_bus: DomainEventBusOutboundPort
+        + create_concert(concert)
+        + reschedule_concert(...)
+        + cancel_concert(id)
+    }
+    class FestivalService {
+        - festivals: FestivalRepositoryOutboundPort
+        - transaction: TransactionOutboundPort
+        - event_bus: DomainEventBusOutboundPort
+        + publish_festival(id)
+    }
+    class "Stage / Artist / Incident\nServices" as OtherServices {
+        + StageService
+        + ArtistService
+        + IncidentService
+    }
+    class "in_transaction()\nrequire_*()" as SupportHelpers <<_support.py>> {
+        + encadre commit / rollback
+        + résout les entités ou lève 404
+    }
+}
+
+' ========================================================
+' 4. CŒUR DE DOMAINE PUR
+' ========================================================
+package "4. Cœur de Domaine Pur (domain)" as Domain #FFFFFF {
+    package "Agrégats & Entités" as Aggregates {
+        class Concert <<Aggregate Root>> {
+            + id: int
+            + time_range: TimeRange
+            + status: ConcertStatus
+            + reschedule(time_range, stage_id)
+            + cancel()
+        }
+        class Festival <<Aggregate Root>> {
+            + id: int
+            + time_range: TimeRange
+            + status: FestivalStatus
+            + publish()
+        }
+        class "Stage / Artist / Incident" as OtherEntities <<Entities>>
+    }
+
+    package "Objets de Valeur (VO)" as ValueObjects {
+        class TimeRange <<Value Object>> {
+            + start: datetime
+            + end: datetime
+            + overlaps_with(other): bool
+            + is_within(boundary): bool
+        }
+        class EquipmentSet <<Value Object>> {
+            + items: frozenset[str]
+            + is_satisfied_by(required): bool
+        }
+        enum "Status Enums" as StatusEnums {
+            FestivalStatus
+            ConcertStatus
+        }
+    }
+
+    package "Services de Domaine" as DomainServices {
+        class SchedulingConflictChecker <<Domain Service>> {
+            + check_conflicts(existing, stage_id, artist_id, range)
+        }
+        class "EquipmentChecker &\nFestivalPolicy" as DomainPolicies <<Domain Services>> {
+            + check(artist, stage)
+            + ensure_not_published()
+            + ensure_within_dates()
+        }
+    }
+
+    package "Événements de Domaine" as DomainEvents {
+        class "Domain Events" as Events <<Events>> {
+            + FestivalPublishedEvent
+            + ConcertRescheduledEvent
+            + ConcertCancelledEvent
+        }
+    }
+}
+
+' ========================================================
+' 5. PORTS DE SORTIE
+' ========================================================
+package "5. Ports de Sortie (ports/outbound)" as PortsOut #FFF4E5 {
+    interface "*RepositoryOutboundPort\n(Concert, Festival, ...)" as RepositoriesPorts <<ABC>> {
+        + get(id): Entity
+        + list_all() / list_by_*_id()
+        + save(entity): Entity
+    }
+    interface TransactionOutboundPort <<ABC>> {
+        + commit()
+        + rollback()
+    }
+    interface DomainEventBusOutboundPort <<ABC>> {
+        + publish(event)
+    }
+    interface NotificationOutboundPort <<ABC>> {
+        + notify_schedule_change(...)
+        + notify_festival_published(...)
+        + notify_concert_cancelled(...)
+    }
+}
+
+' ========================================================
+' 6. ADAPTATEURS DE SORTIE
+' ========================================================
+package "6. Adaptateurs de Sortie (adapters/outbound)" as AdaptersOut #FFF0F0 {
+    package "Persistance (repository)" as Persistence {
+        class SqlAlchemyRepositories {
+            - db: Session
+            + save(entity) // flush()
+            + get() / list_*()
+        }
+        class OutboundMappers <<Domaine ↔ ORM>>
+        class SqlAlchemyModels <<models.py>>
+    }
+
+    package "Transaction (transaction)" as TxAdapter {
+        class SqlAlchemyTransactionAdapter {
+            - db: Session
+            + commit()
+            + rollback()
+        }
+    }
+
+    package "Événements (events)" as BusAdapter {
+        class InMemoryEventBusAdapter {
+            - suppress_errors: bool
+            + publish(event)
+        }
+        class NotificationHandlers {
+            + register_notification_handlers()
+        }
+    }
+
+    package "Notifications (notification)" as NotifAdapter {
+        class EmailNotificationAdapter {
+            + send_email()
+        }
+    }
+}
+
+' ========================================================
+' FLUX VERTICAL ET RELATIONS
+' ========================================================
+
+' Agencement vertical strict
+AdaptersIn -[hidden]down-> PortsIn
+PortsIn -[hidden]down-> UseCases
+UseCases -[hidden]down-> Domain
+Domain -[hidden]down-> PortsOut
+PortsOut -[hidden]down-> AdaptersOut
+
+' 1. Entrée -> Ports Inbound & Mappers
+Routers ..down> PortsIn : appelle
+Routers ..right> InboundMappers : convertit DTOs
+Dependencies ..down> UseCases : injecte via Depends()
+
+' 2. Réalisation Ports Inbound par les Use Cases
+ConcertService ..up|> ConcertInboundPort
+FestivalService ..up|> FestivalInboundPort
+OtherServices ..up|> OtherInboundPorts
+
+' 3. Cas d'Usage -> Domaine & Helpers
+UseCases -down-> SupportHelpers : utilise in_transaction()
+ConcertService -down-> Concert : orchestre
+ConcertService -down-> SchedulingConflictChecker : valide
+ConcertService -down-> DomainPolicies : valide
+FestivalService -down-> Festival : orchestre
+
+' 4. Relations Domaine
+Concert *-- TimeRange
+Concert *-- StatusEnums
+Festival *-- TimeRange
+OtherEntities *-- EquipmentSet
+Concert ..> Events : produit
+Festival ..> Events : produit
+
+' 5. Cas d'Usage -> Ports Outbound
+UseCases ..down> RepositoriesPorts : persiste (flush)
+UseCases ..down> TransactionOutboundPort : valide transaction
+UseCases ..down> DomainEventBusOutboundPort : publie événements post-commit
+
+' 6. Inversion de Dépendance (Adaptateurs Outbound -> Ports Outbound)
+SqlAlchemyRepositories ..up|> RepositoriesPorts
+SqlAlchemyTransactionAdapter ..up|> TransactionOutboundPort
+InMemoryEventBusAdapter ..up|> DomainEventBusOutboundPort
+EmailNotificationAdapter ..up|> NotificationOutboundPort
+
+' 7. Relations internes Adaptateurs Outbound
+SqlAlchemyRepositories -down-> OutboundMappers : utilise
+SqlAlchemyRepositories -down-> SqlAlchemyModels : persiste via ORM
+InMemoryEventBusAdapter -right-> NotificationHandlers : route vers
+NotificationHandlers ..up> NotificationOutboundPort : notifie sans bloquer
+
+@enduml
