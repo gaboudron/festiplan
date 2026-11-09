@@ -1,7 +1,7 @@
 # Checklist de la migration hexagonale — décisions arbitrées
 
 État de référence : `main` à jour avec `origin/main` (PR #2 et #3 fusionnées).
-Suite complète : **145 tests passent** (`python tests/run_tests.py -q`, identique à `pytest -q`).
+Suite complète : **157 tests passent** (`python tests/run_tests.py -q`, identique à `pytest -q`).
 
 Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** retenu
 
@@ -46,8 +46,8 @@ Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** 
 - [x] Implémenter les 5 services applicatifs dans `app/use_cases/` (`ArtistService`, `StageService`, `FestivalService`, `ConcertService`, `IncidentService`) — décisions 9, 10.
 - [x] Rendre le changement de scène effectif : `Concert.reschedule(..., new_stage_id=...)` est appelé par `ConcertService`.
 - [x] Écrire les tests unitaires des use cases avec `MagicMock(spec=...)` (décision 11) : 43 tests.
-- [ ] ⬜ **Adaptateur du bus** : implémentation concrète (bus en mémoire / outbox) + handlers qui traduisent les événements en appels à `NotificationOutboundPort`. À faire avec le DI (décision 12).
-- [x] **Retirer le `commit()` des repositories SQLAlchemy** : fait par le collègue (`ab169f7`), `save()` ne fait plus qu'un `flush()`. Le port de transaction est donc le seul propriétaire du commit. Reste à fournir son implémentation concrète au moment du DI.
+- [x] **Adaptateur du bus** : implémentation concrète (`InMemoryEventBusAdapter` dans `app/adapters/outbound/events/`) + handlers de notification (`register_notification_handlers`) traduisant les événements en appels à `NotificationOutboundPort` + tests unitaires (8 tests).
+- [x] **Retirer le `commit()` des repositories SQLAlchemy** : fait par le collègue (`ab169f7`), `save()` ne fait plus qu'un `flush()`. Le port de transaction est donc le seul propriétaire du commit. `SqlAlchemyTransactionAdapter` est implémenté et testé.
 - [ ] ⬜ Ajouter le document d'architecture (décision n°7) au dépôt et consigner les arbitrages 5/6/7.
 
 ### C. Notre périmètre inbound
