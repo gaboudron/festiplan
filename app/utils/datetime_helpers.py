@@ -31,10 +31,15 @@ def utc_now() -> datetime:
 # Types Pydantic à utiliser dans les DTO entrants / sortants.
 UTCDatetime = Annotated[datetime, AfterValidator(ensure_utc)]
 UTCDatetimeOrNone = Annotated[datetime | None, AfterValidator(ensure_utc_or_none)]
+UTCDateTimeOrNone = UTCDatetimeOrNone
 
 
 class UTCDateTime(TypeDecorator):
-    """Type SQLAlchemy stockant l'UTC naïf et restituant de l'UTC aware."""
+    """Type SQLAlchemy stockant l'UTC naïf et restituant de l'UTC aware.
+
+    Intègre également un schéma Pydantic permettant son utilisation directe
+    comme type d'annotation dans les schémas/DTOs.
+    """
 
     impl = DateTime
     cache_ok = True
@@ -48,3 +53,12 @@ class UTCDateTime(TypeDecorator):
         if value is None:
             return None
         return ensure_utc(value)
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source_type, handler):
+        from pydantic_core import core_schema
+
+        return core_schema.chain_schema([
+            core_schema.datetime_schema(),
+            core_schema.no_info_plain_validator_function(ensure_utc),
+        ])

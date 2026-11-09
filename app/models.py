@@ -6,5 +6,14 @@ from app.adapters.outbound.repository.models import (
     Incident,
     Stage,
 )
+from app.utils.datetime_helpers import UTCDateTime, utc_now
 
-__all__ = ["Festival", "Artist", "Stage", "Concert", "Incident"]
+__all__ = [
+    "Festival",
+    "Artist",
+    "Stage",
+    "Concert",
+    "Incident",
+    "UTCDateTime",
+    "utc_now",
+]
