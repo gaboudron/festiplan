@@ -1,7 +1,5 @@
 """Mappings DTO ↔ domaine pour les concerts."""
 
-from typing import Any
-
 from app.adapters.inbound.api.dtos import (
     ConcertCreateRequest,
     ConcertRescheduleRequest,
@@ -49,8 +47,8 @@ def concert_reschedule_to_domain(
     return concert
 
 
-def concert_to_response(concert: Any) -> ConcertResponse:
-    """Mappe un concert du domaine (ou une ligne ORM transitoire) vers le DTO."""
+def concert_to_response(concert: Concert) -> ConcertResponse:
+    """Mappe un concert du domaine vers le DTO de réponse."""
     start_time, end_time = resolve_time_range(concert)
     return ConcertResponse(
         id=require_persisted_id(concert.id),

@@ -1,7 +1,5 @@
 """Mappings DTO ↔ domaine pour les artistes."""
 
-from typing import Any
-
 from app.adapters.inbound.api.dtos import ArtistCreateRequest, ArtistResponse
 from app.adapters.inbound.api.mappers.common import (
     equipment_items,
@@ -20,8 +18,8 @@ def artist_create_to_domain(dto: ArtistCreateRequest) -> Artist:
     )
 
 
-def artist_to_response(artist: Any) -> ArtistResponse:
-    """Mappe un artiste du domaine (ou une ligne ORM transitoire) vers le DTO."""
+def artist_to_response(artist: Artist) -> ArtistResponse:
+    """Mappe un artiste du domaine vers le DTO de réponse."""
     return ArtistResponse(
         id=require_persisted_id(artist.id),
         name=artist.name,

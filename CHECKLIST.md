@@ -1,7 +1,7 @@
 # Checklist de la migration hexagonale — décisions arbitrées
 
 État de référence : `main` à jour avec `origin/main` (PR #2 et #3 fusionnées).
-Suite complète : **164 tests passent** (`python tests/run_tests.py -q`, identique à `pytest -q`).
+Suite complète : **159 tests passent** (`python tests/run_tests.py -q`, identique à `pytest -q`).
 
 Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** retenu
 
@@ -54,7 +54,7 @@ Légende : ✅ fait · 🔄 en cours · ⏸ reporté · ⬜ à faire · **[R]** 
 
 - [x] `app/adapters/inbound/api/dependencies.py` + `Depends()` (décision 12, câblage complet repositories, transaction, bus d'événements et 5 use cases) : 5 tests.
 - [x] Basculer les 5 routeurs sur les ports entrants uniquement : plus de `Session` ni de `db.query` (`get_concert`, `routers/incidents.py`).
-- [ ] ⬜ Simplifier `mappers/common.py` et supprimer la compatibilité ORM/CSV.
+- [x] Simplifier `mappers/common.py` et supprimer la compatibilité ORM/CSV (typage strict sur les entités et Value Objects du domaine).
 - [x] Retirer les `try/except ValueError/RuntimeError` quand les use cases lèveront les exceptions du domaine (délégué à `register_exception_handlers`).
 - [x] Corriger les 404 des entités liées à la création d'un concert (géré nativement par `EntityNotFoundError`).
 - [x] Ajouter les tests d'intégration HTTP avec `app.dependency_overrides` avant la suppression du legacy.
