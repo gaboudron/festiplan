@@ -4,11 +4,11 @@
 Commandes d'exécution :
     # Avec uv :
     uv run python tests/run_tests.py
-    uv run pytest tests/domain tests/adapters/inbound -v
+    uv run pytest tests/domain tests/ports tests/adapters/inbound -v
 
     # Avec Python standard :
     python tests/run_tests.py
-    pytest tests/domain tests/adapters/inbound -v
+    pytest tests/domain tests/ports tests/adapters/inbound -v
 
 Options utiles :
     # Filtrer par mot-clé (ex: uniquement les tests concert)
@@ -30,6 +30,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # Ajouter ici chaque nouveau dossier de tests.
 TEST_DIRS = [
     PROJECT_ROOT / "tests" / "domain",
+    PROJECT_ROOT / "tests" / "ports" / "inbound",
     PROJECT_ROOT / "tests" / "adapters" / "inbound",
 ]
 
