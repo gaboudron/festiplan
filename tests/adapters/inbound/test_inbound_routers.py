@@ -188,3 +188,34 @@ def test_reschedule_unknown_concert_returns_404(client):
 
 def test_cancel_unknown_concert_returns_404(client):
     assert client.post("/concerts/999/cancel").status_code == 404
+
+
+def test_resolve_incident_endpoint(client):
+    festival = _create_festival(client)
+    artist = _create_artist(client)
+    stage = _create_stage(client, festival["id"])
+    concert = client.post(
+        "/concerts",
+        json={
+            "festival_id": festival["id"],
+            "artist_id": artist["id"],
+            "stage_id": stage["id"],
+            "start_time": "2027-06-18T18:00:00",
+            "end_time": "2027-06-18T19:30:00",
+        },
+    ).json()
+
+    # Déclaration d'incident
+    created_inc = client.post(
+        "/incidents",
+        json={
+            "concert_id": concert["id"],
+            "description": "Panne de retour scène",
+        },
+    ).json()
+    assert created_inc["resolved"] is False
+
+    # Résolution d'incident
+    resolve_resp = client.patch(f"/incidents/{created_inc['id']}/resolve")
+    assert resolve_resp.status_code == 200
+    assert resolve_resp.json()["resolved"] is True

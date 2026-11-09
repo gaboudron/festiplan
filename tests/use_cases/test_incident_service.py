@@ -55,3 +55,18 @@ def test_declare_incident_requires_existing_concert(
 
     incident_repository.save.assert_not_called()
     transaction.commit.assert_not_called()
+
+
+def test_resolve_incident_marks_resolved_and_saves(
+    incident_service, incident_repository, transaction, incident,
+):
+    incident.resolved = False
+    incident_repository.get.return_value = incident
+    incident_repository.save.return_value = incident
+
+    result = incident_service.resolve_incident(incident.id)
+
+    assert result.resolved is True
+    incident_repository.get.assert_called_once_with(incident.id)
+    incident_repository.save.assert_called_once_with(incident)
+    transaction.commit.assert_called_once_with()

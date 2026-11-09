@@ -26,6 +26,16 @@ def create_incident(
     return incident_to_response(created)
 
 
+@router.patch("/{incident_id}/resolve", response_model=IncidentResponse)
+@router.post("/{incident_id}/resolve", response_model=IncidentResponse)
+def resolve_incident(
+    incident_id: int,
+    service: IncidentInboundPort = Depends(get_incident_service),
+):
+    resolved = service.resolve_incident(incident_id)
+    return incident_to_response(resolved)
+
+
 @router.get("", response_model=list[IncidentResponse])
 def list_incidents(
     concert_id: int | None = None,
