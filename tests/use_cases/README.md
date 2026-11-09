@@ -6,15 +6,41 @@ Ce dossier contient les tests de la couche application : les cas d'usage
 ## Principes
 
 - **Pas de base de données, pas de HTTP.** Un test de cas d'usage ne doit ni
-  ouvrir de session SQLAlchemy ni passer par `TestClient`. Les dépendances
-  sortantes seront remplacées par des faux adaptateurs en mémoire.
+  ouvrir de session SQLAlchemy ni passer par `TestClient`.
+- **Doublures avec `unittest.mock.MagicMock`.** Les dépendances sortantes
+  (repositories, notification, transaction) sont remplacées par des
+  `MagicMock` calés sur les ABC de `app/ports/outbound/` via `spec=`, pour
+  rester alignés sur les vrais contrats sans écrire de faux repositories.
 - **Un test vérifie un comportement.** Le nom du test décrit l'action et le
   résultat attendu, pas l'implémentation.
-- **Pas de faux repositories pour l'instant.** Ils seront ajoutés quand les
-  ports sortants (`app/ports/outbound/`) seront définis, afin que les faux
-  respectent les vrais contrats.
 - **Aucune assertion sur les détails internes** (nombre d'appels, ordre des
-  requêtes) sauf si ce comportement fait partie du contrat.
+  requêtes) sauf si l'appel fait partie du contrat : c'est le cas de la
+  transaction et des notifications, dont on vérifie le déclenchement.
+
+## Doublures des dépendances
+
+Les fabriques et fixtures de ce dossier construisent de **vraies entités du
+domaine** ; seules les dépendances sortantes sont doublées :
+
+```python
+from unittest.mock import MagicMock
+
+from app.ports.outbound.repository.concert_repository_outbound_port import (
+    ConcertRepositoryOutboundPort,
+)
+from app.ports.outbound.notification.notification_outbound_port import (
+    NotificationOutboundPort,
+)
+
+repository = MagicMock(spec=ConcertRepositoryOutboundPort)
+repository.get.return_value = concert
+notifications = MagicMock(spec=NotificationOutboundPort)
+```
+
+Décision d'architecture associée : **le cas d'usage ne porte pas le commit**.
+Il appelle un port de transaction qui effectue la transaction, afin de
+découpler au maximum la logique applicative de la persistance. Ce port sera
+lui aussi doublé par un `MagicMock`, et l'on vérifiera qu'il a été appelé.
 
 ## Organisation
 
@@ -46,7 +72,7 @@ Suivre le schéma *Arrange / Act / Assert* et commenter chaque étape :
 
 ```python
 def test_<comportement>_<resultat_attendu>(concert):
-    # Arrange : préparer les entrées et les faux adaptateurs
+    # Arrange : préparer les entités et les MagicMock des ports sortants
     nouvelle_plage = TimeRange(...)
 
     # Act : appeler le cas d'usage
