@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from app.domain.exceptions import InvalidTimeRangeError
+from app.utils.datetime_helpers import ensure_utc
 
 @dataclass(frozen=True)
 class TimeRange:
@@ -8,6 +9,9 @@ class TimeRange:
     end: datetime
 
     def __post_init__(self):
+        # Convention du domaine : tous les créneaux sont en UTC aware.
+        object.__setattr__(self, "start", ensure_utc(self.start))
+        object.__setattr__(self, "end", ensure_utc(self.end))
         if self.end <= self.start:
             raise InvalidTimeRangeError()
 

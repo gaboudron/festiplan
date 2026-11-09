@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import pytest
 from app.domain.time_range import TimeRange
 from app.domain.exceptions import InvalidTimeRangeError
@@ -20,6 +20,29 @@ def test_time_range_cannot_end_before_or_at_start():
             start=datetime(2027, 6, 18, 18, 0),
             end=datetime(2027, 6, 18, 18, 0),
         )
+
+
+def test_time_range_normalizes_naive_datetimes_to_utc():
+    """Vérifie que les datetimes naïfs sont interprétés comme de l'UTC."""
+    time_range = TimeRange(
+        start=datetime(2027, 6, 18, 18, 0),
+        end=datetime(2027, 6, 18, 19, 0),
+    )
+
+    assert time_range.start == datetime(2027, 6, 18, 18, 0, tzinfo=timezone.utc)
+    assert time_range.end == datetime(2027, 6, 18, 19, 0, tzinfo=timezone.utc)
+    assert time_range.start.tzinfo is not None
+
+
+def test_time_range_converts_offset_to_utc():
+    """Vérifie que les datetimes avec offset sont convertis en UTC."""
+    time_range = TimeRange(
+        start=datetime(2027, 6, 18, 20, 0, tzinfo=timezone(timedelta(hours=2))),
+        end=datetime(2027, 6, 18, 21, 0, tzinfo=timezone(timedelta(hours=2))),
+    )
+
+    assert time_range.start == datetime(2027, 6, 18, 18, 0, tzinfo=timezone.utc)
+    assert time_range.end == datetime(2027, 6, 18, 19, 0, tzinfo=timezone.utc)
 
 
 def test_time_range_detects_overlaps():

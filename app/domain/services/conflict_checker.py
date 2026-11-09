@@ -9,8 +9,11 @@ class SchedulingConflictChecker:
         stage_id: int,
         artist_id: int,
         time_range: TimeRange,
+        exclude_concert_id: int | None = None,
     ) -> None:
         for concert in existing_concerts:
+            if exclude_concert_id is not None and concert.id == exclude_concert_id:
+                continue
             if concert.is_cancelled:
                 continue
 

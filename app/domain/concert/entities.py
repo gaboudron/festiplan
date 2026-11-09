@@ -12,9 +12,11 @@ class Concert:
     status: ConcertStatus = ConcertStatus.SCHEDULED
 
 
-    def reschedule(self, new_time_range: TimeRange) -> None:
-        """Reprogramme le concert à un nouvel horaire."""
+    def reschedule(self, new_time_range: TimeRange, new_stage_id: int | None = None) -> None:
+        """Reprogramme le concert à un nouvel horaire et, si fourni, sur une nouvelle scène."""
         self.time_range = new_time_range
+        if new_stage_id is not None:
+            self.stage_id = new_stage_id
 
 
     def cancel(self) -> None:

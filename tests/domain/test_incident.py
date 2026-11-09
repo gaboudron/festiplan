@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import pytest
 from app.domain.incident.entities import Incident
 from app.domain.exceptions import InvalidIncidentMessageError
@@ -16,6 +16,19 @@ def test_incident_default_values():
 
     assert incident.resolved is False
     assert isinstance(incident.occurred_at, datetime)
+
+
+def test_incident_normalizes_occurred_at_to_utc():
+    """Vérifie que la date de survenue est normalisée en UTC aware."""
+    incident = Incident(
+        id=1,
+        concert_id=3,
+        description="Problème lumière",
+        occurred_at=datetime(2027, 6, 18, 20, 0),
+    )
+
+    assert incident.occurred_at == datetime(2027, 6, 18, 20, 0, tzinfo=timezone.utc)
+    assert incident.occurred_at.tzinfo is not None
 
 
 def test_incident_resolved():

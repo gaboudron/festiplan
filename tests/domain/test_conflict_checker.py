@@ -97,6 +97,27 @@ def test_cancelled_concert_is_ignored_for_conflicts():
     )
 
 
+def test_excluded_concert_is_ignored_for_conflicts():
+    """Vérifie que le concert en cours de reprogrammation ne se détecte pas lui-même."""
+    concert = Concert(
+        id=15,
+        festival_id=1,
+        artist_id=7,
+        stage_id=3,
+        time_range=TimeRange(start=datetime(2027, 6, 18, 18, 0), end=datetime(2027, 6, 18, 19, 0)),
+    )
+
+    checker = SchedulingConflictChecker()
+
+    checker.check_conflicts(
+        existing_concerts=[concert],
+        stage_id=3,
+        artist_id=7,
+        time_range=TimeRange(start=datetime(2027, 6, 18, 18, 30), end=datetime(2027, 6, 18, 19, 30)),
+        exclude_concert_id=15,
+    )
+
+
 def test_no_conflict_when_different_stages_and_artists():
     """Vérifie qu'aucune erreur n'est levée si les scènes et artistes sont distincts."""
     existing_concert = Concert(
