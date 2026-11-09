@@ -144,3 +144,20 @@ def test_invalid_reschedule_range_is_mapped_to_400(client):
 
 def test_unknown_concert_returns_404(client):
     assert client.get("/concerts/999").status_code == 404
+
+
+def test_reschedule_unknown_concert_returns_404(client):
+    response = client.patch(
+        "/concerts/999/reschedule",
+        json={
+            "stage_id": 1,
+            "start_time": "2027-06-18T20:00:00",
+            "end_time": "2027-06-18T21:00:00",
+        },
+    )
+
+    assert response.status_code == 404
+
+
+def test_cancel_unknown_concert_returns_404(client):
+    assert client.post("/concerts/999/cancel").status_code == 404
