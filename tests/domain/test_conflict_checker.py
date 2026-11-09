@@ -9,7 +9,7 @@ from app.domain.exceptions import StageOccupiedError, ArtistAlreadyScheduledErro
 # Tests Conflit Checker
 # ==========================
 
-def test_conlict_on_same_stage():
+def test_conflict_on_same_stage():
     """
     Vérifie les conflits sur un même stage.
     Même stage, même horaire mais artistes différents.
@@ -73,3 +73,45 @@ def test_conflict_on_same_artist():
             artist_id=concert_to_check.artist_id,
             time_range=concert_to_check.time_range
         )
+
+
+def test_cancelled_concert_is_ignored_for_conflicts():
+    """Vérifie qu'un concert annulé ne génère pas de conflit d'horaire."""
+    cancelled_concert = Concert(
+        id=15,
+        festival_id=1,
+        artist_id=7,
+        stage_id=3,
+        time_range=TimeRange(start=datetime(2027, 6, 18, 18, 0), end=datetime(2027, 6, 18, 19, 0)),
+    )
+    cancelled_concert.cancel()
+
+    checker = SchedulingConflictChecker()
+
+    # Même scène et même heure, mais le premier concert est annulé -> pas d'erreur levée
+    checker.check_conflicts(
+        existing_concerts=[cancelled_concert],
+        stage_id=3,
+        artist_id=99,
+        time_range=TimeRange(start=datetime(2027, 6, 18, 18, 0), end=datetime(2027, 6, 18, 19, 0)),
+    )
+
+
+def test_no_conflict_when_different_stages_and_artists():
+    """Vérifie qu'aucune erreur n'est levée si les scènes et artistes sont distincts."""
+    existing_concert = Concert(
+        id=1,
+        festival_id=1,
+        artist_id=1,
+        stage_id=1,
+        time_range=TimeRange(start=datetime(2027, 6, 18, 18, 0), end=datetime(2027, 6, 18, 19, 0)),
+    )
+
+    checker = SchedulingConflictChecker()
+    checker.check_conflicts(
+        existing_concerts=[existing_concert],
+        stage_id=2,
+        artist_id=2,
+        time_range=TimeRange(start=datetime(2027, 6, 18, 18, 0), end=datetime(2027, 6, 18, 19, 0)),
+    )
+
