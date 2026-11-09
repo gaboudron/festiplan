@@ -1,9 +1,12 @@
 """Tests des contrats de ports entrants.
 
-Les ports sont des ``Protocol`` : ces tests vérifient qu'une implémentation
-exposant les bonnes méthodes est reconnue, et qu'il manque bien une méthode
-sinon.
+Les ports sont des classes abstraites : une implémentation doit fournir
+toutes les méthodes, sinon elle ne peut pas être instanciée.
 """
+
+import inspect
+
+import pytest
 
 from app.domain.artist.entities import Artist
 from app.domain.concert.entities import Concert
@@ -22,7 +25,7 @@ from app.ports.inbound import (
 # Implémentations factices
 # ==========================
 
-class FakeArtistPort:
+class FakeArtistPort(ArtistInboundPort):
     def list_artists(self) -> list[Artist]:
         return []
 
@@ -30,7 +33,7 @@ class FakeArtistPort:
         return artist
 
 
-class FakeStagePort:
+class FakeStagePort(StageInboundPort):
     def list_stages(self, festival_id: int) -> list[Stage]:
         return []
 
@@ -38,7 +41,7 @@ class FakeStagePort:
         return stage
 
 
-class FakeFestivalPort:
+class FakeFestivalPort(FestivalInboundPort):
     def list_festivals(self) -> list[Festival]:
         return []
 
@@ -49,7 +52,7 @@ class FakeFestivalPort:
         raise NotImplementedError
 
 
-class FakeConcertPort:
+class FakeConcertPort(ConcertInboundPort):
     def list_concerts(self, festival_id: int) -> list[Concert]:
         return []
 
@@ -74,7 +77,7 @@ class FakeConcertPort:
         return []
 
 
-class FakeIncidentPort:
+class FakeIncidentPort(IncidentInboundPort):
     def list_incidents(self, concert_id: int | None = None) -> list[Incident]:
         return []
 
@@ -82,37 +85,42 @@ class FakeIncidentPort:
         return incident
 
 
-class IncompleteArtistPort:
-    def list_artists(self) -> list[Artist]:
-        return []
-
-
 # ==========================
 # Tests
 # ==========================
 
-def test_artist_port_contract():
+def test_ports_are_abstract():
+    for port in (
+        ArtistInboundPort,
+        StageInboundPort,
+        FestivalInboundPort,
+        ConcertInboundPort,
+        IncidentInboundPort,
+    ):
+        with pytest.raises(TypeError):
+            port()
+
+
+def test_complete_implementations_are_valid():
     assert isinstance(FakeArtistPort(), ArtistInboundPort)
-    assert not isinstance(IncompleteArtistPort(), ArtistInboundPort)
-
-
-def test_stage_port_contract():
     assert isinstance(FakeStagePort(), StageInboundPort)
-
-
-def test_festival_port_contract():
     assert isinstance(FakeFestivalPort(), FestivalInboundPort)
-
-
-def test_concert_port_contract():
     assert isinstance(FakeConcertPort(), ConcertInboundPort)
-
-
-def test_incident_port_contract():
     assert isinstance(FakeIncidentPort(), IncidentInboundPort)
 
 
-def test_concert_port_exposes_reschedule_with_optional_stage():
-    assert isinstance(FakeConcertPort(), ConcertInboundPort)
-    # Le changement de scène est optionnel dans le contrat.
-    assert "new_stage_id" in ConcertInboundPort.reschedule_concert.__annotations__
+def test_incomplete_implementation_cannot_be_instantiated():
+    class IncompleteArtistPort(ArtistInboundPort):
+        def list_artists(self) -> list[Artist]:
+            return []
+
+    with pytest.raises(TypeError):
+        IncompleteArtistPort()
+
+
+def test_reschedule_stage_is_optional():
+    parameters = inspect.signature(
+        ConcertInboundPort.reschedule_concert
+    ).parameters
+
+    assert parameters["new_stage_id"].default is None
