@@ -122,3 +122,4 @@ def test_use_case_dependencies():
         transaction=mock_tx,
     )
     assert isinstance(incident_service, IncidentInboundPort)
+
